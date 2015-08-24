@@ -2,18 +2,48 @@
 	"use strict";
 
 	var MockIO = function () {
-		this.data = -1;
+		this.data = "";
 	};
 
 	MockIO.prototype.getch = function () {
-		return this.data;
+		if (this.data.length == 0) return -1;
+
+		var r = this.data.charCodeAt(0);
+		this.data = this.data.slice(1);
+
+		return r;
 	};
 
 	MockIO.prototype.putch = function (value) {
-		this.data = value;
+		Assert.isTrue(0 <= value, "Negative value oputput");
+		this.data += String.fromCharCode(value);
 	};
 
 	window.Tests.RefVmTests = {
+
+		MockIO_getch: function () {
+
+			var io = new MockIO();
+			io.data = "DEF";
+
+			Assert.isSame(68, io.getch(), "Didn't read D");
+			Assert.isSame(69, io.getch(), "Didn't read E");
+			Assert.isSame(70, io.getch(), "Didn't read F");
+			Assert.isSame(-1, io.getch(), "Didn't read EOF");
+			Assert.isSame(-1, io.getch(), "Didn't read EOF`");
+		},
+
+		MockIO_putch: function () {
+
+			var io = new MockIO();
+
+			io.putch(65);
+			io.putch(66);
+			io.putch(67);
+
+			Assert.isSame("ABC", io.data, "Didn't output ABC");
+
+		},
 
 		_newVm: function () {
 			return new RefVM();
@@ -306,12 +336,12 @@
 			var vm = this._newVm();
 			vm.io = new MockIO();
 			vm.load(".");
-			vm.memory[5] = 12;
+			vm.memory[5] = 65;
 			vm.dp = 5;
 
 			vm.execute();
 
-			Assert.isSame(12, vm.io.data, "Wrong value output");
+			Assert.isSame("A", vm.io.data, "Wrong value output");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 
 		},
@@ -334,12 +364,24 @@
 			vm.io = new MockIO();
 			vm.load(",");
 			vm.dp = 7;
-			vm.io.data = 32;
+			vm.io.data = "C";
 
 			vm.execute();
 
-			Assert.isSame(32, vm.memory[7], "Wrong value input");
+			Assert.isSame(67, vm.memory[7], "Wrong value input");
 			Assert.isSame(7, vm.dp, "Data pointer was changed");
+
+		},
+
+		execute_helloworld: function () {
+
+			var vm = this._newVm();
+			vm.io = new MockIO();
+			vm.load("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.");
+
+			vm.execute();
+
+			Assert.isEqual("Hello World!\n", vm.io.data, "Incorrect output from program");
 
 		},
 
