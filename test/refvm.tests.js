@@ -173,6 +173,23 @@
 
 		},
 
+		execute_moveright_beyondmemorymultiple: function () {
+
+			var vm = this._newVm();
+			vm.load(">>>>");
+			vm.dp = vm.memory.length - 2;
+
+			try {
+				vm.execute();
+			}
+			catch (ex) {
+				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
+				return;
+			}
+			Assert.fail("No exception thrown");
+
+		},
+
 		execute_moveleft: function () {
 
 			var vm = this._newVm();
@@ -201,6 +218,23 @@
 
 			var vm = this._newVm();
 			vm.load("<");
+
+			try {
+				vm.execute();
+			}
+			catch (ex) {
+				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
+				return;
+			}
+			Assert.fail("No exception thrown");
+
+		},
+
+		execute_moveleft_beyondmemorymultiple: function () {
+
+			var vm = this._newVm();
+			vm.load("<<<<<<");
+			vm.dp = 3;
 
 			try {
 				vm.execute();
