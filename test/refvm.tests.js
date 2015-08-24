@@ -19,6 +19,10 @@
 		this.data += String.fromCharCode(value);
 	};
 
+
+	//---------------------------------------------------------------------------------------------------------------//
+	// Tests
+	//---------------------------------------------------------------------------------------------------------------//
 	window.Tests.RefVmTests = {
 
 		MockIO_getch: function () {
@@ -76,12 +80,13 @@
 
 			try {
 				vm.load(null);
-				Assert.fail("No exception thrown");
 			}
 			catch (ex)
 			{
 				Assert.isEqual("Illegal Argument", ex.message, "Wrong exception thrown");
+				return;
 			}
+			Assert.fail("No exception thrown");
 
 		},
 
@@ -101,29 +106,31 @@
 
 		load_invalidopenloop: function () {
 
-			var vm = this._newVM();
+			var vm = this._newVm();
 
 			try {
 				vm.load("[[][][]");
-				Assert.fail("No exception thrown");
 			}
 			catch (ex) {
 				Assert.isEqual("Loop opened but not closed", ex.message, "Wrong exception thrown");
+				return;
 			}
+			Assert.fail("No exception thrown");
 
 		},
 
 		load_invalidcloseloop: function () {
 
-			var vm = this._newVM();
+			var vm = this._newVm();
 
 			try {
 				vm.load("[][][]][]");
-				Assert.fail("No exception thrown");
 			}
 			catch (ex) {
 				Assert.isEqual("Loop closed but not opened", ex.message, "Wrong exception thrown");
+				return;
 			}
+			Assert.fail("No exception thrown");
 
 		},
 
@@ -157,11 +164,12 @@
 
 			try {
 				vm.execute();
-				Assert.fail("No exception thrown");
 			}
 			catch (ex) {
 				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
+				return;
 			}
+			Assert.fail("No exception thrown");
 
 		},
 
@@ -173,7 +181,7 @@
 
 			vm.execute();
 
-			Asert.isSame(0, vm.dp, "Data pointer wasn't updated correctly");
+			Assert.isSame(0, vm.dp, "Data pointer wasn't updated correctly");
 
 		},
 
@@ -196,11 +204,13 @@
 
 			try {
 				vm.execute();
-				Assert.fail("No exception thrown");
 			}
 			catch (ex) {
 				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
+				return;
 			}
+			Assert.fail("No exception thrown");
+
 		},
 
 		execute_add: function () {
@@ -274,7 +284,7 @@
 			vm.execute();
 
 			Assert.isSame(-3, vm.memory[5], "Call wasn't decremented correctly");
-			Assiet.isSame(0, vm.memory[0], "First cell was changed");
+			Assert.isSame(0, vm.memory[0], "First cell was changed");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 
 		},
@@ -381,6 +391,7 @@
 
 			vm.execute();
 
+			Test.log(vm.io.data);
 			Assert.isEqual("Hello World!\n", vm.io.data, "Incorrect output from program");
 
 		},
