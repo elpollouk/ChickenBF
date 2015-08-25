@@ -1,0 +1,3 @@
+[submodule "libs/ChickenFW"]
+	path = libs/ChickenFW
+	url = https://github.com/elpollouk/ChickenFW
