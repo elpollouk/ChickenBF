@@ -72,7 +72,31 @@
 
 		fail: function fail(message) {
 			throw new Error(_buildMessage("Failed", message));
-		}
+		},
+
+		expectedException: function expectedException(details, func, message) {
+			details = details || {};
+
+			try {
+				func();
+			}
+			catch (ex) {
+				if (details.type && !(ex instanceof details.type)) {
+					message = _buildMessage("Wrong exception type thrown. Expected = " + details.type.name + ", Actual = " + ex.constructor.name, message)
+					throw new Error(message);
+				}
+
+				if (details.message && ex.message.match(details.message) == null) {
+					message = _buildMessage("Wrong exception message thrown. Expected = '" + details.message + "', Actual = '" + ex.message + "'", message)
+					throw new Error(message);
+				}
+
+				// If we got here, then the exception was what we expected and we can return safely
+				return;
+			}
+
+			throw new Error(_buildMessage("No exception thrown", message));
+		},
 	};
 
 	// Assert Aliases
@@ -83,16 +107,18 @@
 		// Add a test entry to the output
 		// Returns a function to indicate if the test has passed or failed
 		addTestEntry: function addTestEntry(testName) {
-			var div = document.createElement("div");
-			div.innerText = testName + " ";
-			var span = document.createElement("span");
-			span.innerText = "[...]";
-			div.appendChild(span);
+			var containerDiv = document.createElement("div");
+			var titleDiv = document.createElement("div");
+			titleDiv.innerText = testName + " ";
+			var passFailSpan = document.createElement("span");
+			passFailSpan.innerText = "[...]";
+			titleDiv.appendChild(passFailSpan);
+			containerDiv.appendChild(titleDiv);
 
 			// Set up the output div
 			_logDiv = document.createElement("div");
 			_logDiv.style.display = "none";
-			div.onclick = function () {
+			titleDiv.onclick = function () {
 				if (this.style.display === "none") {
 					this.style.display = "block";
 				}
@@ -100,20 +126,20 @@
 					this.style.display = "none";
 				}
 			}.bind(_logDiv);
-			div.appendChild(_logDiv);
-			document.getElementById("output").appendChild(div);
+			containerDiv.appendChild(_logDiv);
+			document.getElementById("output").appendChild(containerDiv);
 
 			// Function to pass or fail the test
-			return function complete(passed) {
+			return function complete(passed, errorMessage) {
 				if (passed) {
-					div.classList.add("passed");
-					span.innerText = "[PASSED]";
-					span.parentElement.style.color = "green";
+					containerDiv.classList.add("passed");
+					passFailSpan.innerText = "[PASSED]";
+					passFailSpan.parentElement.style.color = "green";
 				}
 				else {
-					div.classList.add("failed");
-					span.innerText = "[FAILED]";
-					span.parentElement.style.color = "red";
+					containerDiv.classList.add("failed");
+					passFailSpan.innerText = "[FAILED] - " + errorMessage;
+					passFailSpan.parentElement.style.color = "red";
 				}
 			};
 		},
@@ -217,10 +243,10 @@
 		passed: 0,
 		failed: 0,
 	};
-	var _testComplete = null;	// Function to mark a current test output div as passed or failed
-	var _logDiv = null;			// The log output div for the currently executing test
-	var _scriptsToLoad = [];	// The list of scripts we need to make sure a loaded before running tests
-	var _failedToLoad = false;	// A flag to indicate that a script has failed to load
+	var _testComplete = null;		// Function to mark a current test output div as passed or failed
+	var _logDiv = null;				// The log output div for the currently executing test
+	var _scriptsToLoad = [];		// The list of scripts we need to make sure a loaded before running tests
+	var _failedToLoad = false;		// A flag to indicate that a script has failed to load
 
 	// Builds an assert failure message
 	var _buildMessage = function _buildMessage(fromAssert, fromTest) {
@@ -228,6 +254,11 @@
 			return fromAssert + ": " + fromTest;
 		}
 		return fromAssert;
+	};
+
+	// Returns the first line of an exception to use as a summary
+	var _getExceptionSummary = function _getExceptionSummary(ex) {
+		return ex.message.split("\n")[0];
 	};
 
 	// Function to update the current progress
@@ -253,7 +284,7 @@
 		catch (e) {
 			// Log the test failure
 			_progress.failed++;
-			_testComplete(false);
+			_testComplete(false, _getExceptionSummary(e));
 			Test.logException(e);
 		}
 

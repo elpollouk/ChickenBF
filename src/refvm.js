@@ -8,8 +8,8 @@
 
 	// Default Null IO implementation in case there's no set user IO
 	var NullIO = Chicken.Class(function () {}, {
-		getch: function () { return -1; },
-		putch: function () {}
+		getch: function NullIO_getch() { return -1; },
+		putch: function NullIO_putch() {}
 	});
 
 
@@ -111,7 +111,7 @@
 
 				ip++;
 			}
-			
+
 		}
 	});
 

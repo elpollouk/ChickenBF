@@ -1,24 +1,25 @@
 (function () {
 	"use strict";
 
-	var MockIO = function () {
-		this.data = "";
-	};
+	var MockIO = Chicken.Class(function () {
+			this.data = "";
+		}, {
 
-	MockIO.prototype.getch = function () {
-		if (this.data.length == 0) return -1;
+		getch: function () {
+			if (this.data.length == 0) return -1;
 
-		var r = this.data.charCodeAt(0);
-		this.data = this.data.slice(1);
+			var r = this.data.charCodeAt(0);
+			this.data = this.data.slice(1);
 
-		return r;
-	};
+			return r;
+		},
 
-	MockIO.prototype.putch = function (value) {
-		Assert.isTrue(0 <= value, "Negative value oputput");
-		this.data += String.fromCharCode(value);
-	};
-
+		putch: function (value) {
+			Assert.isTrue(0 <= value, "Negative value oputput");
+			this.data += String.fromCharCode(value);
+		}
+		
+	});
 
 	//---------------------------------------------------------------------------------------------------------------//
 	// Tests
@@ -78,16 +79,11 @@
 
 			var vm = this._newVm();
 
-			try {
+			Assert.expectedException({
+				message: "Illegal Argument"
+			}, function () {
 				vm.load(null);
-			}
-			catch (ex)
-			{
-				Assert.isEqual("Illegal Argument", ex.message, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
-
+			});
 		},
 
 		load_validprog: function () {
@@ -108,14 +104,11 @@
 
 			var vm = this._newVm();
 
-			try {
+			Assert.expectedException({
+				message: "Loop opened but not closed"
+			}, function () { 
 				vm.load("[[][][]");
-			}
-			catch (ex) {
-				Assert.isEqual("Loop opened but not closed", ex.message, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
@@ -123,14 +116,11 @@
 
 			var vm = this._newVm();
 
-			try {
+			Assert.expectedException({
+				message: "Loop closed but not opened"
+			}, function () {
 				vm.load("[][][]][]");
-			}
-			catch (ex) {
-				Assert.isEqual("Loop closed but not opened", ex.message, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
@@ -162,14 +152,12 @@
 			vm.load(">");
 			vm.dp = vm.memory.length - 1;
 
-			try {
+			Assert.expectedException({
+				type: RangeError,
+				message: "Attempted to move beyond upper limit of memory"
+			}, function () {
 				vm.execute();
-			}
-			catch (ex) {
-				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
@@ -179,14 +167,12 @@
 			vm.load(">>>>");
 			vm.dp = vm.memory.length - 2;
 
-			try {
+			Assert.expectedException({
+				type: RangeError,
+				message: "Attempted to move beyond upper limit of memory"
+			}, function () {
 				vm.execute();
-			}
-			catch (ex) {
-				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
@@ -219,14 +205,12 @@
 			var vm = this._newVm();
 			vm.load("<");
 
-			try {
+			Assert.expectedException({
+				type: RangeError,
+				message: "Attempted to move beyond lower limit of memory"
+			}, function () {
 				vm.execute();
-			}
-			catch (ex) {
-				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
@@ -235,15 +219,12 @@
 			var vm = this._newVm();
 			vm.load("<<<<<<");
 			vm.dp = 3;
-
-			try {
+			Assert.expectedException({
+				type: RangeError,
+				message: "Attempted to move beyond lower limit of memory"
+			}, function () {
 				vm.execute();
-			}
-			catch (ex) {
-				Assert.isTrue(ex instanceof RangeError, "Wrong exception thrown");
-				return;
-			}
-			Assert.fail("No exception thrown");
+			});
 
 		},
 
