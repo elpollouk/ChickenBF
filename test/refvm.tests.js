@@ -26,6 +26,11 @@
 	//---------------------------------------------------------------------------------------------------------------//
 	window.Tests.RefVmTests = {
 
+		_testData: {
+			memoryType: Int8Array,
+			memorySize: 1024
+		},
+
 		MockIO_getch: function () {
 
 			var io = new MockIO();
@@ -51,14 +56,16 @@
 		},
 
 		_newVm: function () {
-			return new RefVM();
+			var refvm = Chicken.fetch("RefVM");
+			return new refvm(this._testData.memorySize, this._testData.memoryType);
 		},
 
 		construct: function () {
 
 			var vm = this._newVm();
 
-			Assert.isSame(30000, vm.memory.length, "Memory size wasn't correct");
+			Assert.isTrue(vm.memory instanceof this._testData.memoryType, "Memory was the wrong type");
+			Assert.isSame(this._testData.memorySize, vm.memory.length, "Memory size wasn't correct");
 			for (var i = 0; i < vm.memory.length; i++) {
 				Assert.isSame(0, vm.memory[i], "Memory wasn't initialised to zero");
 			}
@@ -260,7 +267,7 @@
 
 			vm.execute();
 
-			Assert.isSame(5, vm.memory[7], "Call wasn't incremented correctly");
+			Assert.isSame(5, vm.memory[7], "Cell wasn't incremented correctly");
 			Assert.isSame(0, vm.memory[0], "First cell was changed");
 			Assert.isSame(7, vm.dp, "Data pointer was changed");
 
@@ -298,7 +305,7 @@
 
 			vm.execute();
 
-			Assert.isSame(-3, vm.memory[5], "Call wasn't decremented correctly");
+			Assert.isSame(-3, vm.memory[5], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.memory[0], "First cell was changed");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 

@@ -3,7 +3,7 @@
 	This VM has no optimisations and is designed in order to meet the basic BF spec
 */
 
-(function() {
+(Chicken.register("RefVM", [], function() {
 	"use strict";
 
 	// Default Null IO implementation in case there's no set user IO
@@ -14,9 +14,12 @@
 
 
 	// VM Implementation
-	window.RefVM = Chicken.Class(function () {
+	return Chicken.Class(function (memorySize, memoryType) {
 
-		var memory = new Int32Array(30000);
+		memorySize = memorySize || 30000;
+		memoryType = memoryType || Int32Array;
+
+		var memory = new memoryType(memorySize);
 		for (var i = 0; i < memory.length; i++)
 			memory[i] = 0;
 
@@ -115,4 +118,4 @@
 		}
 	});
 
-})();
+}));
