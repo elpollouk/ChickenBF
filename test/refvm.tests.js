@@ -26,46 +26,38 @@
 	//---------------------------------------------------------------------------------------------------------------//
 	window.Tests.RefVmTests = {
 
-		_testData: {
-			memoryType: Int8Array,
-			memorySize: 1024
+		testData: [
+			{
+				testId: "RefVM Int8Array",
+				vm: "RefVM",
+				memoryType: Int8Array,
+				memorySize: 10
+			},
+			{
+				testId: "RefVM Int16Array",
+				vm: "RefVM",
+				memoryType: Int16Array,
+				memorySize: 1024
+			},
+			{
+				testId: "RefVM Int32Array",
+				vm: "RefVM",
+				memoryType: Int32Array,
+				memorySize: 30000
+			},
+		],
+
+		_newVm: function (testData) {
+			var refvm = Chicken.fetch(testData.vm);
+			return new refvm(testData.memorySize, testData.memoryType);
 		},
 
-		MockIO_getch: function () {
+		construct: function (testData) {
 
-			var io = new MockIO();
-			io.data = "DEF";
+			var vm = this._newVm(testData);
 
-			Assert.isSame(68, io.getch(), "Didn't read D");
-			Assert.isSame(69, io.getch(), "Didn't read E");
-			Assert.isSame(70, io.getch(), "Didn't read F");
-			Assert.isSame(-1, io.getch(), "Didn't read EOF");
-			Assert.isSame(-1, io.getch(), "Didn't read EOF`");
-		},
-
-		MockIO_putch: function () {
-
-			var io = new MockIO();
-
-			io.putch(65);
-			io.putch(66);
-			io.putch(67);
-
-			Assert.isSame("ABC", io.data, "Didn't output ABC");
-
-		},
-
-		_newVm: function () {
-			var refvm = Chicken.fetch("RefVM");
-			return new refvm(this._testData.memorySize, this._testData.memoryType);
-		},
-
-		construct: function () {
-
-			var vm = this._newVm();
-
-			Assert.isTrue(vm.memory instanceof this._testData.memoryType, "Memory was the wrong type");
-			Assert.isSame(this._testData.memorySize, vm.memory.length, "Memory size wasn't correct");
+			Assert.isTrue(vm.memory instanceof testData.memoryType, "Memory was the wrong type");
+			Assert.isSame(testData.memorySize, vm.memory.length, "Memory size wasn't correct");
 			for (var i = 0; i < vm.memory.length; i++) {
 				Assert.isSame(0, vm.memory[i], "Memory wasn't initialised to zero");
 			}
@@ -75,16 +67,16 @@
 			Assert.isTrue(vm.io.putch instanceof Function, "IO putch wasn't initialised");
 		},
 
-		load_emptyprog: function () {
+		load_emptyprog: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("");
 
 		},
 
-		load_nullprog: function () {
+		load_nullprog: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 
 			Assert.expectedException({
 				message: "Illegal Argument"
@@ -93,23 +85,23 @@
 			});
 		},
 
-		load_validprog: function () {
+		load_validprog: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("><+[-].,");
 
 		},
 
-		load_comments: function () {
+		load_comments: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("abcdefg");
 
 		},
 
-		load_invalidopenloop: function () {
+		load_invalidopenloop: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 
 			Assert.expectedException({
 				message: "Loop opened but not closed"
@@ -119,9 +111,9 @@
 
 		},
 
-		load_invalidcloseloop: function () {
+		load_invalidcloseloop: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 
 			Assert.expectedException({
 				message: "Loop closed but not opened"
@@ -131,9 +123,9 @@
 
 		},
 
-		execute_moveright: function () {
+		execute_moveright: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(">");
 
 			vm.execute();
@@ -142,9 +134,9 @@
 
 		},
 
-		execute_moveright_multiple: function () {
+		execute_moveright_multiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(">>>>>");
 
 			vm.execute();
@@ -153,9 +145,9 @@
 
 		},
 
-		execute_moveright_beyondmemory: function () {
+		execute_moveright_beyondmemory: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(">");
 			vm.dp = vm.memory.length - 1;
 
@@ -168,9 +160,9 @@
 
 		},
 
-		execute_moveright_beyondmemorymultiple: function () {
+		execute_moveright_beyondmemorymultiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(">>>>");
 			vm.dp = vm.memory.length - 2;
 
@@ -183,9 +175,9 @@
 
 		},
 
-		execute_moveleft: function () {
+		execute_moveleft: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("<");
 			vm.dp = 1;
 
@@ -195,9 +187,9 @@
 
 		},
 
-		execute_moveleft_multiple: function () {
+		execute_moveleft_multiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("<<<<<");
 			vm.dp = 6;
 
@@ -207,9 +199,9 @@
 
 		},
 
-		execute_moveleft_beyondmemory: function () {
+		execute_moveleft_beyondmemory: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("<");
 
 			Assert.expectedException({
@@ -221,11 +213,12 @@
 
 		},
 
-		execute_moveleft_beyondmemorymultiple: function () {
+		execute_moveleft_beyondmemorymultiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("<<<<<<");
 			vm.dp = 3;
+
 			Assert.expectedException({
 				type: RangeError,
 				message: "Attempted to move beyond lower limit of memory"
@@ -235,9 +228,9 @@
 
 		},
 
-		execute_add: function () {
+		execute_add: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("+");
 
 			vm.execute();
@@ -247,9 +240,9 @@
 
 		},
 
-		execute_add_multiple: function () {
+		execute_add_multiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("++++");
 
 			vm.execute();
@@ -259,9 +252,9 @@
 
 		},
 
-		execute_add_notfirstcell: function () {
+		execute_add_notfirstcell: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("+++++");
 			vm.dp = 7;
 
@@ -273,9 +266,9 @@
 
 		},
 
-		execute_sub: function () {
+		execute_sub: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("-");
 
 			vm.execute();
@@ -285,21 +278,21 @@
 
 		},
 
-		execute_sub_multiple: function () {
+		execute_sub_multiple: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("------");
 
-			vm.execute();
+			vm.execute(testData);
 
 			Assert.isSame(-6, vm.memory[0], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
 
 		},
 
-		execute_sub_notfirstcell: function () {
+		execute_sub_notfirstcell: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("---");
 			vm.dp = 5;
 
@@ -311,9 +304,9 @@
 
 		},
 
-		excute_loop_empty: function () {
+		excute_loop_empty: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("[]");
 
 			vm.execute();
@@ -321,9 +314,9 @@
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
 		},
 
-		execute_loop_zerocell: function () {
+		execute_loop_zerocell: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("[-]");
 			vm.memory[0] = 10;
 
@@ -334,9 +327,9 @@
 
 		},
 
-		execute_loop_nested: function () {
+		execute_loop_nested: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load("[[-]>]");
 			vm.memory[0] = 3;
 			vm.memory[1] = 5;
@@ -351,9 +344,9 @@
 
 		},
 
-		execute_out_defaultio: function () {
+		execute_out_defaultio: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(".");
 
 			vm.execute();
@@ -362,10 +355,9 @@
 
 		},
 
+		execute_out_mockio: function (testData) {
 
-		execute_out_mockio: function () {
-
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.io = new MockIO();
 			vm.load(".");
 			vm.memory[5] = 65;
@@ -378,9 +370,9 @@
 
 		},
 
-		execute_in_defaultio: function () {
+		execute_in_defaultio: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.load(",");
 
 			vm.execute();
@@ -390,9 +382,9 @@
 
 		},
 
-		execute_in_mockio: function () {
+		execute_in_mockio: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.io = new MockIO();
 			vm.load(",");
 			vm.dp = 7;
@@ -405,9 +397,9 @@
 
 		},
 
-		execute_helloworld: function () {
+		execute_helloworld: function (testData) {
 
-			var vm = this._newVm();
+			var vm = this._newVm(testData);
 			vm.io = new MockIO();
 			vm.load("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.");
 

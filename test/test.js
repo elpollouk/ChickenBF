@@ -276,7 +276,7 @@
 			test.class.beforeTest && test.class.beforeTest();
 			test.func.before && test.func.before();
 
-			test.func.apply(test.class);
+			test.func.apply(test.class, [test.testData]);
 
 			_progress.passed++;
 			_testComplete(true);
@@ -355,25 +355,81 @@
 		_failedToLoad = true;
 	}
 
+	// Check if an object member is a valid test candidate
+	var _isTest = function _isTest(cls, testName) {
+		return (testName !== "beforeTest"
+		 && testName !== "afterTest"
+		 && testName[0] !== "_"
+		 && typeof cls[testName] === "function"
+		 && cls.hasOwnProperty(testName));
+	};
+
+	// Generate the test qualifier for data driven tests
+	var _generatePreName = function _generatePreName(classData, classIteration, functionData, functionIteration) {
+		var preName = "";
+
+		if (classData.length > 1) {
+			preName += (classData[classIteration].testId || (classIteration + 1)) + ":";
+		}
+
+		if (functionData.length > 1) {
+			preName += (functionData[functionIteration].testId || (functionIteration + 1)) + ":";
+		}
+
+		return preName;
+	};
+
+	// Combines two objects into one
+	var _combine = function _combine(obj1, obj2) {
+		var r = {};
+
+		for (var member in obj1) {
+			if (obj1.hasOwnProperty(member)) r[member] = obj1[member];
+		}
+
+		for (var member in obj2) {
+			if (obj2.hasOwnProperty(member)) r[member] = obj2[member];
+		}
+
+		return r;
+	};
+
+	// Add all the combinations of the test to the test list based on defined class and function test data
+	var _addTest = function _addTest(className, cls, testName) {
+		var func = cls[testName];
+	 	var classData = cls.testData || [{}];
+
+	 	for (var classIt = 0; classIt < classData.length; classIt++) {
+	 		var functionData = func.testData || [{}];
+
+	 		for (var functionIt = 0; functionIt < functionData.length; functionIt++) {
+		 		var preName = _generatePreName(classData, classIt, functionData, functionIt);
+		 		var testData = _combine(classData[classIt], functionData[functionIt]);
+
+				_testList.push({
+					name: preName + className + "." + testName,
+					class: cls,
+					func: func,
+					testData: testData
+				});
+			}
+		}
+	};
+
 	// Scan the Tests name space for tests to run
 	var _scanForTests = function _scanForTests() {
 		for (var className in window.Tests) {
 			if (window.Tests.hasOwnProperty(className)) {
+
 				var cls = window.Tests[className];
 				for (var testName in cls) {
 					// Script private and before/after test functions
-					if (testName != "beforeTest"
-					 && testName != "afterTest"
-					 && testName[0] != "_"
-					 && cls.hasOwnProperty(testName)) {
+					if (_isTest(cls, testName)) {
 					 	// Looks to be a valid test, add it to the list
-						_testList.push({
-							name: className + "." + testName,
-							class: cls,
-							func: cls[testName]
-						});
+					 	_addTest(className, cls, testName);
 					}
 				}
+
 			}
 		}
 	};
