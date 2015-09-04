@@ -31,19 +31,40 @@
 				testId: "RefVM Int8Array",
 				vm: "RefVM",
 				memoryType: Int8Array,
-				memorySize: 10
+				memorySize: 10,
+				minusOne: -1
+			},
+			{
+				testId: "RefVM Uint8Array",
+				vm: "RefVM",
+				memoryType: Uint8Array,
+				minusOne: 0xFF
 			},
 			{
 				testId: "RefVM Int16Array",
 				vm: "RefVM",
 				memoryType: Int16Array,
-				memorySize: 1024
+				memorySize: 1024,
+				minusOne: -1
+			},
+			{
+				testId: "RefVM Uint16Array",
+				vm: "RefVM",
+				memoryType: Uint16Array,
+				minusOne: 0xFFFF
 			},
 			{
 				testId: "RefVM Int32Array",
 				vm: "RefVM",
 				memoryType: Int32Array,
-				memorySize: 30000
+				memorySize: 30000,
+				minusOne: -1
+			},
+			{
+				testId: "RefVM Uint32Array",
+				vm: "RefVM",
+				memoryType: Uint32Array,
+				minusOne: 0xFFFFFFFF
 			},
 		],
 
@@ -57,7 +78,7 @@
 			var vm = this._newVm(testData);
 
 			Assert.isTrue(vm.memory instanceof testData.memoryType, "Memory was the wrong type");
-			Assert.isSame(testData.memorySize, vm.memory.length, "Memory size wasn't correct");
+			Assert.isSame(testData.memorySize || 30000, vm.memory.length, "Memory size wasn't correct");
 			for (var i = 0; i < vm.memory.length; i++) {
 				Assert.isSame(0, vm.memory[i], "Memory wasn't initialised to zero");
 			}
@@ -273,7 +294,7 @@
 
 			vm.execute();
 
-			Assert.isSame(-1, vm.memory[0], "Cell wasn't decremented correctly");
+			Assert.isSame(testData.minusOne, vm.memory[0], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
 
 		},
@@ -285,7 +306,7 @@
 
 			vm.execute(testData);
 
-			Assert.isSame(-6, vm.memory[0], "Cell wasn't decremented correctly");
+			Assert.isSame(testData.minusOne-5, vm.memory[0], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
 
 		},
@@ -298,7 +319,7 @@
 
 			vm.execute();
 
-			Assert.isSame(-3, vm.memory[5], "Cell wasn't decremented correctly");
+			Assert.isSame(testData.minusOne-2, vm.memory[5], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.memory[0], "First cell was changed");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 
@@ -377,7 +398,7 @@
 
 			vm.execute();
 
-			Assert.isSame(-1, vm.memory[0], "Wrong value input");
+			Assert.isSame(testData.minusOne, vm.memory[0], "Wrong value input");
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
 
 		},
