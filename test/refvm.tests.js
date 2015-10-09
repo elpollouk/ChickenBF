@@ -1,26 +1,6 @@
 (function () {
 	"use strict";
 
-	var MockIO = Chicken.Class(function () {
-			this.data = "";
-		}, {
-
-		getch: function () {
-			if (this.data.length == 0) return -1;
-
-			var r = this.data.charCodeAt(0);
-			this.data = this.data.slice(1);
-
-			return r;
-		},
-
-		putch: function (value) {
-			Assert.isTrue(0 <= value, "Negative value oputput");
-			this.data += String.fromCharCode(value);
-		}
-		
-	});
-
 	//---------------------------------------------------------------------------------------------------------------//
 	// Tests
 	//---------------------------------------------------------------------------------------------------------------//
@@ -69,8 +49,9 @@
 		],
 
 		_newVm: function (testData) {
+			var bfio = Chicken.fetch("BfIO");
 			var refvm = Chicken.fetch(testData.vm);
-			return new refvm(testData.memorySize, testData.memoryType);
+			return new refvm(testData.memorySize, testData.memoryType, new bfio());
 		},
 
 		construct: function (testData) {
@@ -365,51 +346,26 @@
 
 		},
 
-		execute_out_defaultio: function (testData) {
+		execute_out: function (testData) {
 
 			var vm = this._newVm(testData);
-			vm.load(".");
-
-			vm.execute();
-
-			Assert.isSame(0, vm.dp, "Data pointer was changed");
-
-		},
-
-		execute_out_mockio: function (testData) {
-
-			var vm = this._newVm(testData);
-			vm.io = new MockIO();
 			vm.load(".");
 			vm.memory[5] = 65;
 			vm.dp = 5;
 
 			vm.execute();
 
-			Assert.isSame("A", vm.io.data, "Wrong value output");
+			Assert.isSame("A", vm.io.stdout, "Wrong value output");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 
 		},
 
-		execute_in_defaultio: function (testData) {
+		execute_in: function (testData) {
 
 			var vm = this._newVm(testData);
-			vm.load(",");
-
-			vm.execute();
-
-			Assert.isSame(testData.minusOne, vm.memory[0], "Wrong value input");
-			Assert.isSame(0, vm.dp, "Data pointer was changed");
-
-		},
-
-		execute_in_mockio: function (testData) {
-
-			var vm = this._newVm(testData);
-			vm.io = new MockIO();
 			vm.load(",");
 			vm.dp = 7;
-			vm.io.data = "C";
+			vm.io.stdin = "C";
 
 			vm.execute();
 
@@ -421,13 +377,12 @@
 		execute_helloworld: function (testData) {
 
 			var vm = this._newVm(testData);
-			vm.io = new MockIO();
 			vm.load("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.");
 
 			vm.execute();
 
-			Test.log(vm.io.data);
-			Assert.isEqual("Hello World!\n", vm.io.data, "Incorrect output from program");
+			Test.log(vm.io.stdout);
+			Assert.isEqual("Hello World!\n", vm.io.stdout, "Incorrect output from program");
 
 		},
 

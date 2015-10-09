@@ -6,15 +6,8 @@
 (Chicken.register("RefVM", [], function() {
 	"use strict";
 
-	// Default Null IO implementation in case there's no set user IO
-	var NullIO = Chicken.Class(function () {}, {
-		getch: function NullIO_getch() { return -1; },
-		putch: function NullIO_putch() {}
-	});
-
-
 	// VM Implementation
-	return Chicken.Class(function (memorySize, memoryType) {
+	return Chicken.Class(function (memorySize, memoryType, io) {
 
 		memorySize = memorySize || 30000;
 		memoryType = memoryType || Int32Array;
@@ -25,7 +18,7 @@
 
 		this.memory = memory;
 		this.dp = 0;
-		this.io = new NullIO();
+		this.io = io;
 
 	}, {
 		load: function RefVM_load(prog) {
