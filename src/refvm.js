@@ -3,11 +3,11 @@
 	This VM has no optimisations and is designed in order to meet the basic BF spec
 */
 
-(Chicken.register("RefVM", [], function() {
+(Chicken.register("RefVM", ["BfIO"], function(bfio) {
 	"use strict";
 
 	// VM Implementation
-	return Chicken.Class(function (memorySize, memoryType, io) {
+	return Chicken.Class(function (memorySize, memoryType) {
 
 		memorySize = memorySize || 30000;
 		memoryType = memoryType || Int32Array;
@@ -18,7 +18,7 @@
 
 		this.memory = memory;
 		this.dp = 0;
-		this.io = io;
+		this.io = new bfio();
 
 	}, {
 		load: function RefVM_load(prog) {

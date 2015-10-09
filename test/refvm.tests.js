@@ -49,9 +49,8 @@
 		],
 
 		_newVm: function (testData) {
-			var bfio = Chicken.fetch("BfIO");
 			var refvm = Chicken.fetch(testData.vm);
-			return new refvm(testData.memorySize, testData.memoryType, new bfio());
+			return new refvm(testData.memorySize, testData.memoryType);
 		},
 
 		construct: function (testData) {
