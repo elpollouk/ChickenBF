@@ -62,7 +62,7 @@
 				break;
 
 			case StopReason.YIELD:
-				requestAnimationFrame(executeSlice);
+				setTimeout(executeSlice, 0);
 				break;
 
 			default:
