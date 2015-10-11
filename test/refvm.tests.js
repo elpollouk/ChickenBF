@@ -1,6 +1,8 @@
 (function () {
 	"use strict";
 
+	var StopReason = Chicken.fetch("BF_StopReason");
+
 	//---------------------------------------------------------------------------------------------------------------//
 	// Tests
 	//---------------------------------------------------------------------------------------------------------------//
@@ -62,10 +64,13 @@
 			for (var i = 0; i < vm.memory.length; i++) {
 				Assert.isSame(0, vm.memory[i], "Memory wasn't initialised to zero");
 			}
+			Assert.isSame(0, vm.ip, "Instruction pointer wasn't initialised correctly");
 			Assert.isSame(0, vm.dp, "Data pointer wasn't initialised correctly");
 			Assert.isNotNull(vm.io, "IO handler wasn't initialised");
 			Assert.isTrue(vm.io.getch instanceof Function, "IO getch wasn't initialised");
 			Assert.isTrue(vm.io.putch instanceof Function, "IO putch wasn't initialised");
+
+			Assert.isSame(100, vm.config.yieldthreshold, "Incorrect yield threshold");
 		},
 
 		load_emptyprog: function (testData) {
@@ -373,15 +378,51 @@
 
 		},
 
+		execute_stopreason_end: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.load("++++++++++[-]");
+
+			var reason = vm.execute();
+
+			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported");
+		},
+
+		execute_stopreason_yield: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.config.yieldthreshold = 5;
+			/*
+			 This program should execute 11 branch instructions in total on the RefVM
+			*/
+			vm.load("++++++++++[-]");
+
+			var reason = vm.execute();
+
+			Assert.isSame(StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD");
+			Assert.isSame(6, vm.memory[0], "Program did not execute as long as expected");
+
+			reason = vm.execute();
+
+			Assert.isSame(StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD again");
+			Assert.isSame(1, vm.memory[0], "Program did not execute as long as expected");
+
+			reason = vm.execute();
+
+			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported, expected END");
+
+		},
+
 		execute_helloworld: function (testData) {
 
 			var vm = this._newVm(testData);
 			vm.load("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.");
 
-			vm.execute();
+			var reason = vm.execute();
 
 			Test.log(vm.io.stdout);
 			Assert.isEqual("Hello World!\n", vm.io.stdout, "Incorrect output from program");
+			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported");
 
 		},
 

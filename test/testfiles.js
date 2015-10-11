@@ -10,6 +10,7 @@
 	);
 
 	//              System under test                   Test script
+	Test.addScripts("../src/bfvm.js");
 	Test.addScripts("../src/bfio.js",					"bfio.tests.js");
 	Test.addScripts("../src/refvm.js",					"refvm.tests.js");
 })();

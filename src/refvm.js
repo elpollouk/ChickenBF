@@ -3,7 +3,7 @@
 	This VM has no optimisations and is designed in order to meet the basic BF spec
 */
 
-(Chicken.register("RefVM", ["BfIO"], function(bfio) {
+(Chicken.register("RefVM", ["BF_StopReason", "BfIO"], function(StopReason, bfio) {
 	"use strict";
 
 	// VM Implementation
@@ -12,12 +12,18 @@
 		memorySize = memorySize || 30000;
 		memoryType = memoryType || Int32Array;
 
+		// Set up the default config options
+		this.config = {
+			yieldthreshold: 100,
+		};
+
 		var memory = new memoryType(memorySize);
 		for (var i = 0; i < memory.length; i++)
 			memory[i] = 0;
 
 		this.memory = memory;
 		this.dp = 0;
+		this.ip = 0;
 		this.io = new bfio();
 
 	}, {
@@ -47,9 +53,22 @@
 
 		execute: function RefVM_execute() {
 			
-			var ip = 0;
+			var ip = this.ip;
+			var dp = this.dp;
 			var prog = this._prog;
 			var loopCounter = 0;
+			var yieldthreshold = this.config.yieldthreshold;
+			var that = this;
+
+			// A yielder function that checks how many times it has been called and will store the execution context if execution should yield
+			var shouldYield = function () {
+				if (--yieldthreshold == 0) {
+					that.ip = ip + 1; // Resume execution at the next instruction
+					that.dp = dp;
+					return true;
+				}
+				return false;
+			};
 
 			while (ip < prog.length)
 			{
@@ -57,33 +76,33 @@
 
 				switch (code) {
 					case ">":
-						if (this.dp === (this.memory.length-1)) throw new RangeError("Attempted to move beyond upper limit of memory");
-						this.dp++;
+						if (dp === (this.memory.length-1)) throw new RangeError("Attempted to move beyond upper limit of memory");
+						dp++;
 						break;
 
 					case "<":
-						if (this.dp === 0) throw new RangeError("Attempted to move beyond lower limit of memory");
-						this.dp--;
+						if (dp === 0) throw new RangeError("Attempted to move beyond lower limit of memory");
+						dp--;
 						break;
 
 					case "+":
-						this.memory[this.dp]++;
+						this.memory[dp]++;
 						break;
 
 					case "-":
-						this.memory[this.dp]--;
+						this.memory[dp]--;
 						break;
 
 					case ".":
-						this.io.putch(this.memory[this.dp]);
+						this.io.putch(this.memory[dp]);
 						break;
 
 					case ",":
-						this.memory[this.dp] = this.io.getch();
+						this.memory[dp] = this.io.getch();
 						break;
 
 					case "[":
-						if (this.memory[this.dp] === 0) {
+						if (this.memory[dp] === 0) {
 							loopCounter = 1
 							while (loopCounter !== 0) {
 								ip++;
@@ -91,10 +110,12 @@
 								else if (prog[ip] === ']') loopCounter--;
 							}
 						}
+
+						if (shouldYield()) return StopReason.YIELD;
 						break;
 
 					case "]":
-						if (this.memory[this.dp] !== 0) {
+						if (this.memory[dp] !== 0) {
 							loopCounter = 1;
 							while (loopCounter !== 0) {
 								ip--;
@@ -102,12 +123,19 @@
 								else if (prog[ip] === ']') loopCounter++;
 							}
 						}
+
+						if (shouldYield()) return StopReason.YIELD;
 						break;
 				};
 
 				ip++;
 			}
 
+			// Save the execution context
+			this.ip = ip;
+			this.dp = dp;
+
+			return StopReason.END;
 		}
 	});
 
