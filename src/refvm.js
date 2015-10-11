@@ -53,9 +53,15 @@
 
 		execute: function RefVM_execute() {
 			
+			// Execution context
 			var ip = this.ip;
 			var dp = this.dp;
 			var prog = this._prog;
+			var progSize = prog.length;
+			var memory = this.memory;
+			var memorySize = memory.length;
+
+			// Yield checker
 			var loopCounter = 0;
 			var yieldthreshold = this.config.yieldthreshold;
 			var that = this;
@@ -70,13 +76,13 @@
 				return false;
 			};
 
-			while (ip < prog.length)
+			while (ip < progSize)
 			{
 				var code = prog[ip];
 
 				switch (code) {
 					case ">":
-						if (dp === (this.memory.length-1)) throw new RangeError("Attempted to move beyond upper limit of memory");
+						if (dp === (memorySize-1)) throw new RangeError("Attempted to move beyond upper limit of memory");
 						dp++;
 						break;
 
@@ -86,23 +92,23 @@
 						break;
 
 					case "+":
-						this.memory[dp]++;
+						memory[dp]++;
 						break;
 
 					case "-":
-						this.memory[dp]--;
+						memory[dp]--;
 						break;
 
 					case ".":
-						this.io.putch(this.memory[dp]);
+						this.io.putch(memory[dp]);
 						break;
 
 					case ",":
-						this.memory[dp] = this.io.getch();
+						memory[dp] = this.io.getch();
 						break;
 
 					case "[":
-						if (this.memory[dp] === 0) {
+						if (memory[dp] === 0) {
 							loopCounter = 1
 							while (loopCounter !== 0) {
 								ip++;
@@ -115,7 +121,7 @@
 						break;
 
 					case "]":
-						if (this.memory[dp] !== 0) {
+						if (memory[dp] !== 0) {
 							loopCounter = 1;
 							while (loopCounter !== 0) {
 								ip--;
