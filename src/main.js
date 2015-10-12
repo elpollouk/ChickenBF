@@ -1,4 +1,4 @@
-(Chicken.inject(["RefVM", "BF_StopReason"], function (RefVM, StopReason) {
+(Chicken.inject(["RefVM", "BFVM"], function (RefVM, BFVM) {
 
 	"use strict";
 
@@ -57,11 +57,11 @@
 		updateTime();
 
 		switch (reason) {
-			case StopReason.END:
+			case BFVM.StopReason.END:
 				document.getElementById("execute").disabled = false;
 				break;
 
-			case StopReason.YIELD:
+			case BFVM.StopReason.YIELD:
 				setTimeout(executeSlice, 0);
 				break;
 
