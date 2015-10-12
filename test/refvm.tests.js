@@ -1,7 +1,7 @@
 (function () {
 	"use strict";
 
-	var StopReason = Chicken.fetch("BF_StopReason");
+	var BFVM = Chicken.fetch("BFVM");
 
 	//---------------------------------------------------------------------------------------------------------------//
 	// Tests
@@ -378,6 +378,66 @@
 
 		},
 
+		execute_in_yield: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.load(",");
+
+			var reason = vm.execute();
+
+			Assert.isSame(BFVM.StopReason.NEEDS_INPUT, reason, "Incorrect stop reason reported");
+
+			vm.io.stdin = "A";
+
+			reason = vm.execute();
+
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(65, vm.memory[0], "Incorect value read into memory");
+
+		},
+
+
+		execute_in_eof_zero: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.load("++,");
+			vm.io.close();
+
+			var reason = vm.execute();
+
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(0, vm.memory[0], "Memory location set incorrectly on EOF result");
+
+		},
+
+		execute_in_eof_minusOne: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.io.eofBehaviour = BFVM.EofBehaviour.MINUS_ONE;
+			vm.load("++,");
+			vm.io.close();
+
+			var reason = vm.execute();
+
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(testData.minusOne, vm.memory[0], "Memory location set incorrectly on EOF result");
+
+		},
+
+		execute_in_eof_noChange: function (testData) {
+
+			var vm = this._newVm(testData);
+			vm.io.eofBehaviour = BFVM.EofBehaviour.NO_CHANGE;
+			vm.load("++,");
+			vm.io.close();
+
+			var reason = vm.execute();
+
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(2, vm.memory[0], "Memory location set incorrectly on EOF result");
+
+		},
+
 		execute_stopreason_end: function (testData) {
 
 			var vm = this._newVm(testData);
@@ -385,7 +445,7 @@
 
 			var reason = vm.execute();
 
-			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
 		},
 
 		execute_stopreason_yield: function (testData) {
@@ -399,17 +459,17 @@
 
 			var reason = vm.execute();
 
-			Assert.isSame(StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD");
+			Assert.isSame(BFVM.StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD");
 			Assert.isSame(6, vm.memory[0], "Program did not execute as long as expected");
 
 			reason = vm.execute();
 
-			Assert.isSame(StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD again");
+			Assert.isSame(BFVM.StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD again");
 			Assert.isSame(1, vm.memory[0], "Program did not execute as long as expected");
 
 			reason = vm.execute();
 
-			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported, expected END");
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported, expected END");
 
 		},
 
@@ -422,7 +482,7 @@
 
 			Test.log(vm.io.stdout);
 			Assert.isEqual("Hello World!\n", vm.io.stdout, "Incorrect output from program");
-			Assert.isSame(StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
 
 		},
 

@@ -1,12 +1,27 @@
-(Chicken.register("BfIO", [], function () {
+(Chicken.register("BfIO", ["BFVM"], function (BFVM) {
 
 	return Chicken.Class(function () {
 		this.stdin = "";
 		this.stdout = "";
+		this.eofBehaviour = BFVM.EofBehaviour.ZERO;
 	}, {
 
-		getch: function () {
-			if (this.stdin.length == 0) return -1;
+		getch: function (originalValue) {
+
+			if (this.stdin === null) {
+				switch (this.eofBehaviour) {
+					case BFVM.EofBehaviour.MINUS_ONE:
+						return -1;
+
+					case BFVM.EofBehaviour.NO_CHANGE:
+						return originalValue;
+
+					default:
+						return 0;
+				}
+			}
+
+			if (this.stdin.length === 0) return null;
 
 			var r = this.stdin.charCodeAt(0);
 			this.stdin = this.stdin.slice(1);
@@ -16,8 +31,11 @@
 
 		putch: function (value) {
 			this.stdout += String.fromCharCode(value);
-		}
+		},
 		
+		close: function () {
+			this.stdin = null;
+		}
 	});
 
 }));

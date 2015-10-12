@@ -3,7 +3,7 @@
 	This VM has no optimisations and is designed in order to meet the basic BF spec
 */
 
-(Chicken.register("RefVM", ["BF_StopReason", "BfIO"], function(StopReason, bfio) {
+(Chicken.register("RefVM", ["BFVM", "BfIO"], function(BFVM, bfio) {
 	"use strict";
 
 	// VM Implementation
@@ -68,7 +68,7 @@
 
 			// A yielder function that checks how many times it has been called and will store the execution context if execution should yield
 			var shouldYield = function () {
-				if (--yieldthreshold == 0) {
+				if (--yieldthreshold === 0) {
 					that.ip = ip + 1; // Resume execution at the next instruction
 					that.dp = dp;
 					return true;
@@ -104,7 +104,14 @@
 						break;
 
 					case ",":
-						memory[dp] = this.io.getch();
+						var value = this.io.getch(memory[dp]);
+						if (value === null) {
+							// Save execution context and yield
+							this.dp = dp;
+							this.ip = ip; // We want to resume execution at this instruction so it can attempt to read again
+							return BFVM.StopReason.NEEDS_INPUT;
+						}
+						memory[dp] = value;
 						break;
 
 					case "[":
@@ -117,7 +124,7 @@
 							}
 						}
 
-						if (shouldYield()) return StopReason.YIELD;
+						if (shouldYield()) return BFVM.StopReason.YIELD;
 						break;
 
 					case "]":
@@ -125,12 +132,12 @@
 							loopCounter = 1;
 							while (loopCounter !== 0) {
 								ip--;
-								if (prog[ip] == '[') loopCounter--;
+								if (prog[ip] === '[') loopCounter--;
 								else if (prog[ip] === ']') loopCounter++;
 							}
 						}
 
-						if (shouldYield()) return StopReason.YIELD;
+						if (shouldYield()) return BFVM.StopReason.YIELD;
 						break;
 				};
 
@@ -141,7 +148,7 @@
 			this.ip = ip;
 			this.dp = dp;
 
-			return StopReason.END;
+			return BFVM.StopReason.END;
 		}
 	});
 
