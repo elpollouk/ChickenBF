@@ -51,8 +51,10 @@
 
 		},
 
-		execute: function RefVM_execute() {
+		execute: function RefVM_execute(eventCallback) {
 			
+			eventCallback = eventCallback || function () {};
+
 			// Execution context
 			var ip = this.ip;
 			var dp = this.dp;
@@ -87,12 +89,22 @@
 
 				switch (code) {
 					case ">":
-						if (dp === (memorySize-1)) throw new RangeError("Attempted to move beyond upper limit of memory");
+						if (dp === (memorySize-1)) {
+							this.dp = dp;
+							this.ip = ip;
+							eventCallback(BFVM.EventId.RUNTIME_ERROR, { message: "Attempted to move beyond upper limit of memory" });
+							return;
+						}
 						dp++;
 						break;
 
 					case "<":
-						if (dp === 0) throw new RangeError("Attempted to move beyond lower limit of memory");
+						if (dp === 0) {
+							this.dp = dp;
+							this.ip = ip;
+							eventCallback(BFVM.EventId.RUNTIME_ERROR, { message: "Attempted to move beyond lower limit of memory" });
+							return;
+						}
 						dp--;
 						break;
 
@@ -105,7 +117,7 @@
 						break;
 
 					case ".":
-						this.io.putch(memory[dp]);
+						eventCallback(BFVM.EventId.STDOUT, String.fromCharCode(memory[dp]));
 						break;
 
 					case ",":
@@ -114,7 +126,8 @@
 							// Save execution context and yield
 							this.dp = dp;
 							this.ip = ip; // We want to resume execution at this instruction so it can attempt to read again
-							return BFVM.StopReason.NEEDS_INPUT;
+							eventCallback(BFVM.EventId.NEEDS_INPUT);
+							return;
 						}
 						memory[dp] = value;
 						break;
@@ -129,7 +142,10 @@
 							}
 						}
 
-						if (shouldYield()) return BFVM.StopReason.YIELD;
+						if (shouldYield()) {
+							eventCallback(BFVM.EventId.YIELD);
+							return;
+						}
 						break;
 
 					case "]":
@@ -142,7 +158,10 @@
 							}
 						}
 
-						if (shouldYield()) return BFVM.StopReason.YIELD;
+						if (shouldYield()) {
+							eventCallback(BFVM.EventId.YIELD);
+							return;
+						}
 						break;
 				};
 
@@ -153,7 +172,7 @@
 			this.ip = ip;
 			this.dp = dp;
 
-			return BFVM.StopReason.END;
+			eventCallback(BFVM.EventId.END);
 		}
 	});
 

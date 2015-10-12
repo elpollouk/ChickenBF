@@ -229,7 +229,26 @@
 			mock = _applyMock(obj, funcName, spyFunc);
 
 			return mock;
-		}
+		},
+
+		// Return a simple function object than can be used to monitor calls to it
+		// This can be used to monitor correct callback and event behaviour
+		// Returns can be a single value or an array of values
+		monitor: function monitor(returns) {
+			var monitorFunc = function () {
+				monitorFunc.calls.push(arguments);
+
+				if (Array.isArray(returns)) {
+					if (returns.length != 1) {
+						return returns.shift();
+					}
+					return returns[0];
+				}
+				return returns;
+			};
+			monitorFunc.calls = [];
+			return monitorFunc;
+		},
 	};
 
 

@@ -2,7 +2,6 @@
 
 	return Chicken.Class(function () {
 		this.stdin = "";
-		this.stdout = "";
 		this.eofBehaviour = BFVM.EofBehaviour.ZERO;
 	}, {
 
@@ -27,10 +26,6 @@
 			this.stdin = this.stdin.slice(1);
 
 			return r;
-		},
-
-		putch: function (value) {
-			this.stdout += String.fromCharCode(value);
 		},
 		
 		close: function () {

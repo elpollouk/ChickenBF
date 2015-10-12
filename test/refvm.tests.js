@@ -68,7 +68,6 @@
 			Assert.isSame(0, vm.dp, "Data pointer wasn't initialised correctly");
 			Assert.isNotNull(vm.io, "IO handler wasn't initialised");
 			Assert.isTrue(vm.io.getch instanceof Function, "IO getch wasn't initialised");
-			Assert.isTrue(vm.io.putch instanceof Function, "IO putch wasn't initialised");
 
 			Assert.isSame(100, vm.config.yieldthreshold, "Incorrect yield threshold");
 		},
@@ -157,12 +156,12 @@
 			vm.load(">");
 			vm.dp = vm.memory.length - 1;
 
-			Assert.expectedException({
-				type: RangeError,
-				message: "Attempted to move beyond upper limit of memory"
-			}, function () {
-				vm.execute();
-			});
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
+
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.RUNTIME_ERROR, eventMonitor.calls[0][0], "Incorrect event type raised");
+			Assert.isSame("Attempted to move beyond upper limit of memory", eventMonitor.calls[0][1].message, "Incorrect error message");
 
 		},
 
@@ -172,12 +171,12 @@
 			vm.load(">>>>");
 			vm.dp = vm.memory.length - 2;
 
-			Assert.expectedException({
-				type: RangeError,
-				message: "Attempted to move beyond upper limit of memory"
-			}, function () {
-				vm.execute();
-			});
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
+
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.RUNTIME_ERROR, eventMonitor.calls[0][0], "Incorrect event type raised");
+			Assert.isSame("Attempted to move beyond upper limit of memory", eventMonitor.calls[0][1].message, "Incorrect error message");
 
 		},
 
@@ -210,12 +209,12 @@
 			var vm = this._newVm(testData);
 			vm.load("<");
 
-			Assert.expectedException({
-				type: RangeError,
-				message: "Attempted to move beyond lower limit of memory"
-			}, function () {
-				vm.execute();
-			});
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
+
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.RUNTIME_ERROR, eventMonitor.calls[0][0], "Incorrect event type raised");
+			Assert.isSame("Attempted to move beyond lower limit of memory", eventMonitor.calls[0][1].message, "Incorrect error message");
 
 		},
 
@@ -225,12 +224,12 @@
 			vm.load("<<<<<<");
 			vm.dp = 3;
 
-			Assert.expectedException({
-				type: RangeError,
-				message: "Attempted to move beyond lower limit of memory"
-			}, function () {
-				vm.execute();
-			});
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
+
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.RUNTIME_ERROR, eventMonitor.calls[0][0], "Incorrect event type raised");
+			Assert.isSame("Attempted to move beyond lower limit of memory", eventMonitor.calls[0][1].message, "Incorrect error message");
 
 		},
 
@@ -289,7 +288,7 @@
 			var vm = this._newVm(testData);
 			vm.load("------");
 
-			vm.execute(testData);
+			vm.execute();
 
 			Assert.isSame(testData.minusOne-5, vm.memory[0], "Cell wasn't decremented correctly");
 			Assert.isSame(0, vm.dp, "Data pointer was changed");
@@ -357,9 +356,11 @@
 			vm.memory[5] = 65;
 			vm.dp = 5;
 
-			vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame("A", vm.io.stdout, "Wrong value output");
+			Assert.isSame(BFVM.EventId.STDOUT, eventMonitor.calls[0][0], "Incorrect event id registered");
+			Assert.isSame("A", eventMonitor.calls[0][1], "Wrong value output");
 			Assert.isSame(5, vm.dp, "Data pointer was changed");
 
 		},
@@ -383,15 +384,18 @@
 			var vm = this._newVm(testData);
 			vm.load(",");
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.NEEDS_INPUT, reason, "Incorrect stop reason reported");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.NEEDS_INPUT, eventMonitor.calls[0][0], "Incorrect event id reported");
 
 			vm.io.stdin = "A";
 
-			reason = vm.execute();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(2, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[1][0], "Incorrect event id reported");
 			Assert.isSame(65, vm.memory[0], "Incorect value read into memory");
 
 		},
@@ -403,9 +407,11 @@
 			vm.load("++,");
 			vm.io.close();
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[0][0], "Incorrect event id reported");
 			Assert.isSame(0, vm.memory[0], "Memory location set incorrectly on EOF result");
 
 		},
@@ -417,9 +423,11 @@
 			vm.load("++,");
 			vm.io.close();
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[0][0], "Incorrect event id reported");
 			Assert.isSame(testData.minusOne, vm.memory[0], "Memory location set incorrectly on EOF result");
 
 		},
@@ -431,49 +439,51 @@
 			vm.load("++,");
 			vm.io.close();
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[0][0], "Incorrect event id reported");
 			Assert.isSame(2, vm.memory[0], "Memory location set incorrectly on EOF result");
 
 		},
 
-		execute_stopreason_end: function (testData) {
+		execute_EventId_end: function (testData) {
 
 			var vm = this._newVm(testData);
 			vm.load("++++++++++[-]");
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[0][0], "Incorrect event id reported");
 		},
 
-		execute_stopreason_yield: function (testData) {
+		execute_EventId_yield: function (testData) {
 
 			var vm = this._newVm(testData, {
 				"Date": {
-					nowReturns: [1, 101],
-					now: function () {
-						var r = this.nowReturns.shift();
-						if (r) return r;
-						return 1000;
-					}
+					now: Test.monitor([1, 101])
 				}
 			});
 
 			vm.load("+[]++");
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD");
+			Assert.isSame(1, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.YIELD, eventMonitor.calls[0][0], "Incorrect event id reported");
 			Assert.isSame(2, vm.ip, "Instruction pointer not set at next instruction correctly");
 
 			// Force the ip to break out of the loop so we can check ed ended state
 			vm.ip = 3;
 
-			reason = vm.execute();
+			vm.execute(eventMonitor);
 
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported, expected END");
+			Assert.isSame(2, eventMonitor.calls.length, "Incorrect number of events raised");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[1][0], "Incorrect event id reported, expected END");
 			Assert.isSame(3, vm.memory[0], "Memory cell wasn't set correctly");
 
 		},
@@ -483,11 +493,20 @@
 			var vm = this._newVm(testData);
 			vm.load("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.");
 
-			var reason = vm.execute();
+			var eventMonitor = Test.monitor();
+			vm.execute(eventMonitor);
 
-			Test.log(vm.io.stdout);
-			Assert.isEqual("Hello World!\n", vm.io.stdout, "Incorrect output from program");
-			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported");
+			Assert.isSame(BFVM.EventId.END, eventMonitor.calls[eventMonitor.calls.length-1][0], "Incorrect event id reported");
+
+			// Build the output
+			var output = "";
+			for (var i = 0; i < eventMonitor.calls.length-1; i++) {
+				Assert.isSame(BFVM.EventId.STDOUT, eventMonitor.calls[i][0], "Wrong event id logged");
+				output += eventMonitor.calls[i][1];
+			}
+			Assert.isEqual("Hello World!\n", output, "Incorrect output from program");
+
+			Test.log(output);
 
 		},
 

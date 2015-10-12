@@ -1,13 +1,13 @@
 (Chicken.register("BFVM", [], function () {
 
 	return {
-		StopReason: {
+		EventId: {
 			END: 0,
-			NEEDS_INPUT: 1,
-			YIELD: 2,
+			YIELD: 1,
+			NEEDS_INPUT: 2,
+			STDOUT: 3,
 
-			FAULT_DP_LOW: -1,
-			FAULT_DP_HIGH: -2,
+			RUNTIME_ERROR: -1
 		},
 
 		EofBehaviour: {

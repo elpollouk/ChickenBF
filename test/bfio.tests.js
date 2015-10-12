@@ -25,18 +25,6 @@
 
 		},
 
-		putch: function () {
-
-			var io = this._newIO();
-
-			io.putch(65);
-			io.putch(66);
-			io.putch(67);
-
-			Assert.isSame("ABC", io.stdout, "Didn't output ABC");
-
-		},
-
 		close_getch_minusOne: function () {
 
 			var io = this._newIO(BFVM.EofBehaviour.MINUS_ONE);

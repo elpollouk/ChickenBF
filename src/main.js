@@ -5,7 +5,8 @@
 	var vm;
 	var startTime;
 	var timerOutput;
-	var lastOutputLength;
+	var outputString;
+	var outputElement;
 
 	var htmlEscape = function htmlEscape(text) {
 		return text
@@ -42,33 +43,34 @@
 		timerOutput.innerText = hours + ":" + minutes + ":" + seconds + "." + ms;
 	};
 
+	var updateScreen = function () {
+		updateTime();
+		outputElement.innerHTML = htmlEscape(outputString);
+	};
 
 	var executeSlice = function () {
 
-		var reason = vm.execute();
+		vm.execute(function (eventId, data) {
+			switch (eventId) {
+				case BFVM.EventId.END:
+					updateScreen();
+					document.getElementById("execute").disabled = false;
+					break;
 
-		var output = vm.io.stdout;
-		if (output && output.length != lastOutputLength) {
-			output = htmlEscape(output);
-			document.getElementById("progOutput").innerHTML = output;
-			lastOutputLength = output.length;
-		}
+				case BFVM.EventId.YIELD:
+					updateScreen();
+					setTimeout(executeSlice, 0);
+					break;
 
-		updateTime();
+				case BFVM.EventId.STDOUT:
+					outputString += data;
+					break;
 
-		switch (reason) {
-			case BFVM.StopReason.END:
-				document.getElementById("execute").disabled = false;
-				break;
-
-			case BFVM.StopReason.YIELD:
-				setTimeout(executeSlice, 0);
-				break;
-
-			default:
-				throw new Error("Unrecognised stop reason");
-		}
-
+				default:
+					throw new Error("Unrecognised stop reason");
+			}
+		});
+		
 	};
 
 
@@ -83,8 +85,8 @@
 			vm.load(document.getElementById("progInput").value);
 			this.disabled = true;
 
-			document.getElementById("progOutput").innerHTML = "";
-			lastOutputLength = 0;
+			outputElement = document.getElementById("progOutput");
+			outputElement.innerHTML = outputString = "";
 			startTime = Date.now();
 			
 			executeSlice();
