@@ -81,7 +81,6 @@
 			vm = new RefVM(1000, Uint32Array);
 
 			vm.load(document.getElementById("progInput").value);
-			vm.config.yieldthreshold = 100000;
 			this.disabled = true;
 
 			document.getElementById("progOutput").innerHTML = "";

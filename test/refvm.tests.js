@@ -50,8 +50,8 @@
 			},
 		],
 
-		_newVm: function (testData) {
-			var refvm = Chicken.fetch(testData.vm);
+		_newVm: function (testData, mocks) {
+			var refvm = Chicken.fetch(testData.vm, mocks);
 			return new refvm(testData.memorySize, testData.memoryType);
 		},
 
@@ -450,26 +450,31 @@
 
 		execute_stopreason_yield: function (testData) {
 
-			var vm = this._newVm(testData);
-			vm.config.yieldthreshold = 5;
-			/*
-			 This program should execute 11 branch instructions in total on the RefVM
-			*/
-			vm.load("++++++++++[-]");
+			var vm = this._newVm(testData, {
+				"Date": {
+					nowReturns: [1, 101],
+					now: function () {
+						var r = this.nowReturns.shift();
+						if (r) return r;
+						return 1000;
+					}
+				}
+			});
+
+			vm.load("+[]++");
 
 			var reason = vm.execute();
 
 			Assert.isSame(BFVM.StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD");
-			Assert.isSame(6, vm.memory[0], "Program did not execute as long as expected");
+			Assert.isSame(2, vm.ip, "Instruction pointer not set at next instruction correctly");
 
-			reason = vm.execute();
-
-			Assert.isSame(BFVM.StopReason.YIELD, reason, "Incorrect stop reason reported, expected YIELD again");
-			Assert.isSame(1, vm.memory[0], "Program did not execute as long as expected");
+			// Force the ip to break out of the loop so we can check ed ended state
+			vm.ip = 3;
 
 			reason = vm.execute();
 
 			Assert.isSame(BFVM.StopReason.END, reason, "Incorrect stop reason reported, expected END");
+			Assert.isSame(3, vm.memory[0], "Memory cell wasn't set correctly");
 
 		},
 

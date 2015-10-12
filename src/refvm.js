@@ -3,7 +3,7 @@
 	This VM has no optimisations and is designed in order to meet the basic BF spec
 */
 
-(Chicken.register("RefVM", ["BFVM", "BfIO"], function(BFVM, bfio) {
+(Chicken.register("RefVM", ["BFVM", "BfIO", "Date"], function(BFVM, bfio, Date) {
 	"use strict";
 
 	// VM Implementation
@@ -63,15 +63,20 @@
 
 			// Yield checker
 			var loopCounter = 0;
+			var startTime = Date.now();
 			var yieldthreshold = this.config.yieldthreshold;
+			var yieldCheckCounter = 50;
 			var that = this;
 
 			// A yielder function that checks how many times it has been called and will store the execution context if execution should yield
 			var shouldYield = function () {
-				if (--yieldthreshold === 0) {
-					that.ip = ip + 1; // Resume execution at the next instruction
-					that.dp = dp;
-					return true;
+				if (--yieldCheckCounter === 0) {
+					if ((Date.now() - startTime) >= yieldthreshold) {
+						that.ip = ip + 1; // Resume execution at the next instruction
+						that.dp = dp;
+						return true;
+					}
+					yieldCheckCounter = 50;
 				}
 				return false;
 			};
