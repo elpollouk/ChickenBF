@@ -58,6 +58,7 @@
 					break;
 
 				default:
+					updateScreen();
 					throw new Error("Unrecognised stop reason");
 			}
 		});
