@@ -24,8 +24,9 @@
 		this.memory = memory;
 		this.dp = 0;
 		this.ip = 0;
+		this.sp = -1;
 		this.io = new bfio();
-		this.stack = [];
+		this.stack = new Array(1024);
 
 	}, {
 		load: function RefVM_load(prog) {
@@ -59,6 +60,7 @@
 			// Execution context
 			var ip = this.ip;
 			var dp = this.dp;
+			var sp = this.sp;
 			var stack = this.stack;
 			var prog = this._prog;
 			var progSize = prog.length;
@@ -78,6 +80,7 @@
 					if ((Date.now() - startTime) >= yieldthreshold) {
 						that.ip = ip + 1; // Resume execution at the next instruction
 						that.dp = dp;
+						that.sp = sp;
 						return true;
 					}
 					yieldCheckCounter = 50;
@@ -94,6 +97,7 @@
 						if (dp === (memorySize-1)) {
 							this.dp = dp;
 							this.ip = ip;
+							this.sp = sp;
 							eventCallback(BFVM.EventId.RUNTIME_ERROR, { message: "Attempted to move beyond upper limit of memory" });
 							return;
 						}
@@ -104,6 +108,7 @@
 						if (dp === 0) {
 							this.dp = dp;
 							this.ip = ip;
+							this.sp = sp;
 							eventCallback(BFVM.EventId.RUNTIME_ERROR, { message: "Attempted to move beyond lower limit of memory" });
 							return;
 						}
@@ -128,6 +133,7 @@
 							// Save execution context and yield
 							this.dp = dp;
 							this.ip = ip; // We want to resume execution at this instruction so it can attempt to read again
+							this.sp = sp;
 							eventCallback(BFVM.EventId.NEEDS_INPUT);
 							return;
 						}
@@ -144,7 +150,7 @@
 							}
 						}
 						else {
-							stack.push(ip);
+							stack[++sp] = ip;
 						}
 
 						if (shouldYield()) {
@@ -155,10 +161,10 @@
 
 					case "]":
 						if (memory[dp] !== 0) {
-							ip = stack[stack.length-1];
+							ip = stack[sp];
 						}
 						else {
-							stack.pop();
+							--sp;
 						}
 
 						if (shouldYield()) {
@@ -174,6 +180,7 @@
 			// Save the execution context
 			this.ip = ip;
 			this.dp = dp;
+			this.sp = sp;
 
 			eventCallback(BFVM.EventId.END);
 		}
