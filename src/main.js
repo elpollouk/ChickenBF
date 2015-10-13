@@ -5,7 +5,6 @@
 	var vm;
 	var startTime;
 	var timerOutput;
-	var outputString;
 	var outputElement;
 
 	var htmlEscape = function htmlEscape(text) {
@@ -45,7 +44,6 @@
 
 	var updateScreen = function () {
 		updateTime();
-		outputElement.innerHTML = htmlEscape(outputString);
 	};
 
 	var executeSlice = function () {
@@ -63,14 +61,14 @@
 					break;
 
 				case BFVM.EventId.STDOUT:
-					outputString += data;
+					outputElement.innerText += data;
 					break;
 
 				default:
 					throw new Error("Unrecognised stop reason");
 			}
 		});
-		
+
 	};
 
 
@@ -86,7 +84,7 @@
 			this.disabled = true;
 
 			outputElement = document.getElementById("progOutput");
-			outputElement.innerHTML = outputString = "";
+			outputElement.innerHTML = "";
 			startTime = Date.now();
 			
 			executeSlice();
