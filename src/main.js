@@ -6,16 +6,7 @@
 	var startTime;
 	var timerOutput;
 	var outputElement;
-
-	var htmlEscape = function htmlEscape(text) {
-		return text
-			.replace(/</g,"&lt;")
-			.replace(/>/g,"&gt;")
-			.replace(/ /g, "&nbsp;")
-			.replace(/\r\n/g, "<br />")
-			.replace(/\n/g, "<br />")
-			.replace(/\r/g, "<br />");
-	};
+	var outputBuffer;
 
 	var updateTime = function () {
 		var timeTaken = (Date.now() - startTime);
@@ -44,6 +35,8 @@
 
 	var updateScreen = function () {
 		updateTime();
+		outputElement.innerText += outputBuffer;
+		outputBuffer = "";
 	};
 
 	var executeSlice = function () {
@@ -61,7 +54,7 @@
 					break;
 
 				case BFVM.EventId.STDOUT:
-					outputElement.innerText += data;
+					outputBuffer += data;
 					break;
 
 				default:
@@ -75,6 +68,7 @@
 	window.onload = function () {
 
 		timerOutput = document.getElementById("timerOutput");
+		outputElement = document.getElementById("progOutput");
 		
 		document.getElementById("execute").onclick = function () {
 
@@ -83,8 +77,8 @@
 			vm.load(document.getElementById("progInput").value);
 			this.disabled = true;
 
-			outputElement = document.getElementById("progOutput");
 			outputElement.innerHTML = "";
+			outputBuffer = "";
 			startTime = Date.now();
 			
 			executeSlice();
