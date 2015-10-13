@@ -25,6 +25,7 @@
 		this.dp = 0;
 		this.ip = 0;
 		this.io = new bfio();
+		this.stack = [];
 
 	}, {
 		load: function RefVM_load(prog) {
@@ -58,6 +59,7 @@
 			// Execution context
 			var ip = this.ip;
 			var dp = this.dp;
+			var stack = this.stack;
 			var prog = this._prog;
 			var progSize = prog.length;
 			var memory = this.memory;
@@ -134,12 +136,15 @@
 
 					case "[":
 						if (memory[dp] === 0) {
-							loopCounter = 1
+							loopCounter = 1;
 							while (loopCounter !== 0) {
 								ip++;
 								if (prog[ip] === '[') loopCounter++;
 								else if (prog[ip] === ']') loopCounter--;
 							}
+						}
+						else {
+							stack.push(ip);
 						}
 
 						if (shouldYield()) {
@@ -150,12 +155,10 @@
 
 					case "]":
 						if (memory[dp] !== 0) {
-							loopCounter = 1;
-							while (loopCounter !== 0) {
-								ip--;
-								if (prog[ip] === '[') loopCounter--;
-								else if (prog[ip] === ']') loopCounter++;
-							}
+							ip = stack[stack.length-1];
+						}
+						else {
+							stack.pop();
 						}
 
 						if (shouldYield()) {
