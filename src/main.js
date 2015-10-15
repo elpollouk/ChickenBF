@@ -1,4 +1,4 @@
-(Chicken.inject(["RefVM", "BFVM"], function (RefVM, BFVM) {
+(Chicken.inject(["OptVM", "BFVM"], function (VM, BFVM) {
 
 	"use strict";
 
@@ -55,6 +55,7 @@
 
 				case BFVM.EventId.STDOUT:
 					outputBuffer += data;
+					updateScreen();
 					break;
 
 				default:
@@ -73,7 +74,7 @@
 		
 		document.getElementById("execute").onclick = function () {
 
-			vm = new RefVM(1000, Uint32Array);
+			vm = new VM(1000, Uint32Array);
 
 			vm.load(document.getElementById("progInput").value);
 			this.disabled = true;
